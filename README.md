@@ -4,6 +4,8 @@ Firmware for the [Hardware Boot Selection Switch](https://hackaday.io/project/17
 
 ## Building
 
+You'll need `gcc-arm-none-eabi` to build and `openocd` to flash.
+
 ```sh
 # Pull in libopencm3
 git submodule init
@@ -17,7 +19,7 @@ make -j8
 cd src
 make
 
-# Flash
+# Flash (assumes a J-Link programmer connected to SWD on the device)
 make flash
 ```
 
