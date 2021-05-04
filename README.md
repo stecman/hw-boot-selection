@@ -9,7 +9,11 @@ Firmware for the [Hardware Boot Selection Switch](https://hackaday.io/project/17
 git submodule init
 git submodule update
 
-# Build
+# Build opencm3 (only needed once)
+cd libopencm3
+make -j8
+
+# Build firmware
 cd src
 make
 
