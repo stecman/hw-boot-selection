@@ -154,7 +154,7 @@ const uint8_t FatSector[] = {
 /**
  * Callback for switch_position file contents
  */
-static void readSwtich(uint8_t* output)
+static void readSwitch(uint8_t* output)
 {
     output[0] = gpio_get(GPIOA, GPIO6) ? '1' : '0';
 }
@@ -180,7 +180,7 @@ static struct VirtualFile _virtualFiles[] = {
             .ext = "   ",
             .size = 1
         },
-        .read = readSwtich
+        .read = readSwitch
     },
     {
         .longName = "switch_position_grub.cfg",
