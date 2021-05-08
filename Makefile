@@ -56,9 +56,6 @@ genlink_defs = $(shell $(OPENCM3_DIR)/scripts/genlink.py $(DEVICES_DATA) $(DEVIC
 FLASH_SIZE_BYTES = $(shell python ./scripts/parse_defs.py _ROM $(genlink_defs))
 SRAM_SIZE_BYTES = $(shell python ./scripts/parse_defs.py _RAM $(genlink_defs))
 
-test:
-	@echo $(genlink_cppflags)
-	@echo $(FLASH_SIZE_BYTES) $(SRAM_SIZE_BYTES)
 
 reset:
 	$(OOCD) -f $(OOCD_FILE) -c 'reset ()'
