@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Print the RAM and ROM use percent of compiled firmware
+# Based on https://interrupt.memfault.com/blog/best-firmware-size-tools
+
 if [  $# -le 2 ]
 then
     echo "This script requires 3 arguments."

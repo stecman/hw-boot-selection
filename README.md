@@ -13,21 +13,29 @@ git submodule init
 git submodule update
 
 # Build libopencm3 (only needed once)
-cd libopencm3
-make -j8
+make -C libopencm3 -j8
 
 # Build the firmware
-cd src
 make
 
-# Flash (assumes a J-Link programmer connected to SWD on the device)
+# Flash with a J-Link programmer connected by SWD
 make flash
+
+# Flash with an ST-Link programmer connected by SWD
+make flash PROGRAMMER=stlink
 ```
 
-This project supports building for multiple different parts. Use `make DEVICE=partnumber` to build for a specific part. These parts have been tested:
+This project supports building and flashing multiple different parts. These parts have been tested:
 
 - `stm32f103c8` (default): found on the "blue pill" and "maple" STM32 dev boards
 - `stm32f070f6`
+
+To build for your specific part, pass the `DEVICE` parameter to `make` on the command line (or export `DEVICE` as an environment variable):
+
+```sh
+make DEVICE=stm32f070f6
+make flash DEVICE=stm32f070f6
+```
 
 Valid patterns for the `DEVICE` parameter can be found in `libopencm3/ld/devices.data`.
 

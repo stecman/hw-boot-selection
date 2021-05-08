@@ -67,6 +67,9 @@ ifndef GDB
 	GDB = $(PREFIX)gdb
 endif
 
+# Filename to build to
+OUTPUT_ELF = $(PROJECT).$(DEVICE).elf
+OUTPUT_BIN = $(PROJECT).$(DEVICE).bin
 
 OPENCM3_INC = $(OPENCM3_DIR)/include
 
@@ -75,7 +78,7 @@ INCLUDES += $(patsubst %,-I%, . $(OPENCM3_INC) )
 
 OBJS = $(CFILES:%.c=$(BUILD_DIR)/%.o)
 OBJS += $(AFILES:%.S=$(BUILD_DIR)/%.o)
-GENERATED_BINS = $(PROJECT).elf $(PROJECT).bin $(PROJECT).map $(PROJECT).list $(PROJECT).lss
+GENERATED_BINS = $(PROJECT)*.elf $(PROJECT)*.bin $(PROJECT)*.map $(PROJECT)*.list $(PROJECT)*.lss
 
 TGT_CPPFLAGS += -MD
 TGT_CPPFLAGS += -Wall -Wundef $(INCLUDES)
@@ -127,7 +130,7 @@ LDLIBS += -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group
 %: s.%
 %: SCCS/s.%
 
-all: $(PROJECT).elf $(PROJECT).bin
+all: $(OUTPUT_ELF) $(OUTPUT_BIN)
 
 # error if not using linker script generator
 ifeq (,$(DEVICE))
@@ -139,10 +142,6 @@ else
 # if linker script generator was used, make sure it's cleaned.
 GENERATED_BINS += $(LDSCRIPT)
 endif
-
-# Ensure the platform we want from libopencm3 is compiled
-opencm3:
-	$(Q)$(MAKE) -C $(OPENCM3_DIR) TARGETS=stm32/f0
 
 # Need a special rule to have a bin dir
 $(BUILD_DIR)/%.o: %.c
@@ -160,7 +159,7 @@ $(BUILD_DIR)/%.o: %.S
 	@mkdir -p $(dir $@)
 	$(Q)$(CC) $(TGT_ASFLAGS) $(ASFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $@ -c $<
 
-$(PROJECT).elf: opencm3 $(OBJS) $(LDSCRIPT) $(LIBDEPS)
+$(OUTPUT_ELF): opencm3 $(OBJS) $(LDSCRIPT) $(LIBDEPS)
 	@printf "  LD\t$@\n"
 	$(Q)$(LD) $(TGT_LDFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -o $@
 
@@ -169,7 +168,7 @@ $(PROJECT).elf: opencm3 $(OBJS) $(LDSCRIPT) $(LIBDEPS)
 	$(Q)$(OBJCOPY) -O binary  $< $@
 
 	@printf "\nFirmware size ($<):\n"
-	@../scripts/size.sh $< $(FLASH_SIZE_BYTES) $(SRAM_SIZE_BYTES)
+	@./scripts/size.sh $< $(FLASH_SIZE_BYTES) $(SRAM_SIZE_BYTES)
 
 %.lss: %.elf
 	$(OBJDUMP) -h -S $< > $@
@@ -179,11 +178,6 @@ $(PROJECT).elf: opencm3 $(OBJS) $(LDSCRIPT) $(LIBDEPS)
 
 clean:
 	rm -rf $(BUILD_BASE) $(GENERATED_BINS)
-
-	$(Q)if [ -d $* ]; then \
-		printf "  CLEAN   $*\n"; \
-		$(MAKE) -C $* clean OPENCM3_DIR=$(OPENCM3_DIR) || exit $?; \
-	fi;
 
 .PHONY: all clean opencm3
 -include $(OBJS:.o=.d)
