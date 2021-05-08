@@ -24,7 +24,7 @@ make
 make flash
 ```
 
-This project supports building for multiple target parts. Use `make DEVICE=partnumber` to build for a specific target. These parts have been tested:
+This project supports building for multiple different parts. Use `make DEVICE=partnumber` to build for a specific part. These parts have been tested:
 
 - `stm32f103c8` (default): found on the "blue pill" and "maple" STM32 dev boards
 - `stm32f070f6`
