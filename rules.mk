@@ -30,7 +30,8 @@
 # C++ hasn't been actually tested with this..... sorry bout that. ;)
 # Second expansion/secondary not set, add this if you need them.
 
-BUILD_DIR ?= bin
+BUILD_BASE = build
+BUILD_DIR = $(BUILD_BASE)/$(DEVICE)
 OPT ?= -Os
 CSTD ?= -std=c99
 
@@ -52,6 +53,20 @@ LD	= $(PREFIX)gcc
 OBJCOPY	= $(PREFIX)objcopy
 OBJDUMP	= $(PREFIX)objdump
 OOCD	?= openocd
+
+# Configure path to gdb
+GDB ?=
+
+# Use gdb-multiarch if it's present
+ifndef GDB
+	GDB = $(shell command -v gdb-multiarch 2> /dev/null)
+endif
+
+# Otherwise assume prefixed gdb
+ifndef GDB
+	GDB = $(PREFIX)gdb
+endif
+
 
 OPENCM3_INC = $(OPENCM3_DIR)/include
 
@@ -163,7 +178,7 @@ $(PROJECT).elf: opencm3 $(OBJS) $(LDSCRIPT) $(LIBDEPS)
 	$(OBJDUMP) -S $< > $@
 
 clean:
-	rm -rf $(BUILD_DIR) $(GENERATED_BINS)
+	rm -rf $(BUILD_BASE) $(GENERATED_BINS)
 
 	$(Q)if [ -d $* ]; then \
 		printf "  CLEAN   $*\n"; \

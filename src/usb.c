@@ -1,9 +1,6 @@
-#include "usb_control.h"
+#include "usb.h"
 #include "fat.h"
 
-#include <libopencm3/cm3/nvic.h>
-#include <libopencm3/stm32/gpio.h>
-#include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/msc.h>
 
 #include <string.h>
@@ -139,7 +136,7 @@ const uint8_t BootSector[] = {
     0x00,                                    // drive number
     0x00,                                    // reserved
     0x29,                                    // extended boot signature
-    QBVAL(0x55AA6922),                       // volume serial number
+    QBVAL(0x55AA6921),                       // volume serial number
     'S', 'W', 'I', 'T', 'C', 'H', ' ', ' ', ' ', ' ', ' ',  // volume label
     'F', 'A', 'T', '1', '2', ' ', ' ', ' '   // filesystem type
 };
@@ -156,17 +153,17 @@ const uint8_t FatSector[] = {
  */
 static void readSwitch(uint8_t* output)
 {
-    output[0] = gpio_get(GPIOA, GPIO6) ? '1' : '0';
+    output[0] = read_switch_value();
 }
 
 /**
- * Callback for switch_position_grub.vfg file contents
+ * Callback for switch_position_grub.cfg file contents
  */
 static char grubConfigStr[] = "set os_hw_switch=0\n";
 static void readGrubConfig(uint8_t* output)
 {
-    // Modify config with current switch value
-    grubConfigStr[sizeof(grubConfigStr)-3] = gpio_get(GPIOA, GPIO6) ? '1' : '0';
+    // Modify config string with current switch value
+    grubConfigStr[sizeof(grubConfigStr)-3] = read_switch_value();
 
     memcpy(output, &grubConfigStr, sizeof(grubConfigStr));
 }
@@ -193,7 +190,9 @@ static struct VirtualFile _virtualFiles[] = {
     },
 };
 
-
+/**
+ * Generate directory entries listing all virtual files
+ */
 static void generate_dir_sector(uint8_t* output)
 {
     for (uint8_t i = 0; i < COUNT_OF(_virtualFiles); ++i)
@@ -210,7 +209,7 @@ static void generate_dir_sector(uint8_t* output)
     }
 }
 
-static int read_block(uint32_t lba, uint8_t *copy_to)
+static int read_block(uint32_t lba, uint8_t* copy_to)
 {
     memset(copy_to, 0, SECTOR_SIZE);
 
@@ -256,18 +255,16 @@ static int write_block(uint32_t lba, const uint8_t *copy_from)
 {
     (void)lba;
     (void)copy_from;
-    // ignore writes
+
+    // Ignore writes
+
     return 0;
 }
 
-
-void usb_device_init(void)
+usbd_device* usb_device_init(const usbd_driver* driver)
 {
-    // Set up USB peripheral
-    nvic_enable_irq(NVIC_USB_IRQ);
-
      _usbd_dev = usbd_init(
-        &st_usbfs_v2_usb_driver,
+        driver,
         &dev_descr,
         &config,
         usb_strings,
@@ -287,10 +284,6 @@ void usb_device_init(void)
         read_block,
         write_block
     );
-}
 
-void usb_isr(void)
-{
-    // Handle USB requests as they come through
-    usbd_poll(_usbd_dev);
+    return _usbd_dev;
 }

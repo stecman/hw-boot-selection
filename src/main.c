@@ -1,81 +1,63 @@
-#include "usb_control.h"
+#include "clock.h"
+#include "usb.h"
 
-#include <libopencm3/cm3/nvic.h>
-#include <libopencm3/cm3/systick.h>
-#include <libopencm3/stm32/flash.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
+
+#if defined(STM32F0)
 #include <libopencm3/stm32/syscfg.h>
+#endif
 
-/**
- * Configure the 12MHz HSE to give a 48MHz PLL clock for the USB peripheral to function
- *
- * This is based on a clock configuration calculated in STM32 Cube. Note that
- * the STM32F070 requires an external oscillator for USB as its HSI is not
- * precise enough per the datasheet:
- *
- * > [USB] requires a precise 48 MHz clock which can be generated from the
- * > internal main PLL (the clock source must use an HSE crystal oscillator).
- */
-static void clock_setup_12mhz_hse_out_48mhz(void)
+static usbd_device* init_usb(void)
 {
-    rcc_osc_on(RCC_HSE);
-    rcc_wait_for_osc_ready(RCC_HSE);
-    rcc_set_sysclk_source(RCC_HSE);
+    #if defined(STM32F070F6)
+        // Turn on the SYSCFG module and switch out PA9/PA10 for PA11/PA12
+        // The USB peripheral is not phsyically connected without this
+        // and won't be enumerated
+        RCC_APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
+        SYSCFG_CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
+    #endif
 
-    rcc_set_hpre(RCC_CFGR_HPRE_NODIV);  // AHB Prescaler
-    rcc_set_ppre(RCC_CFGR_PPRE_NODIV); // APB1 Prescaler
+    #if defined(STM32F0)
+        return usb_device_init(&st_usbfs_v2_usb_driver);
+    #elif defined(STM32F1)
+        return usb_device_init(&st_usbfs_v1_usb_driver);
+    #else
+        #error "USB driver not set for the current target"
+    #endif
+}
 
-    flash_prefetch_enable();
-    flash_set_ws(FLASH_ACR_LATENCY_024_048MHZ);
+static void init_gpio(void)
+{
+    rcc_periph_clock_enable(RCC_GPIOA);
 
-    // PLL for USB: (12MHz * 8) / 2 = 48MHz
-    rcc_set_prediv(RCC_CFGR2_PREDIV_DIV2);
-    rcc_set_pll_multiplication_factor(RCC_CFGR_PLLMUL_MUL8);
-    rcc_set_pll_source(RCC_CFGR_PLLSRC_HSE_CLK);
-    rcc_set_pllxtpre(RCC_CFGR_PLLXTPRE_HSE_CLK_DIV2);
+    #if defined(STM32F1)
+        // STM32 F1
+        gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO6);
+        gpio_set(GPIOA, GPIO6); // Enable internal pull-up
+    #else
+        // STM32 F0, F2, F3, F4
+        gpio_mode_setup(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO6);
+    #endif
+}
 
-    rcc_osc_on(RCC_PLL);
-    rcc_wait_for_osc_ready(RCC_PLL);
-    rcc_set_sysclk_source(RCC_PLL);
-
-    rcc_set_usbclk_source(RCC_PLL);
-
-    rcc_apb1_frequency = 48000000;
-    rcc_ahb_frequency = 48000000;
+// (Called from usb.c)
+char read_switch_value(void)
+{
+    return gpio_get(GPIOA, GPIO6) ? '1' : '0';
 }
 
 int main(void)
 {
-    // Turn on the SYSCFG module and switch out PA9/PA10 for PA11/PA12
-    // The USB peripheral is not phsyically connected without this and won't be enumerated
-    RCC_APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
-    SYSCFG_CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
+    init_clocks();
+    init_gpio();
 
-    // Clock setup
-    clock_setup_12mhz_hse_out_48mhz();
-    rcc_periph_clock_enable(RCC_GPIOA);
-
-    // Configure SysTick at 1ms intervals
-    systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
-    systick_set_reload((rcc_ahb_frequency/1000) - 1); // (48MHz/1000)
-    systick_interrupt_enable();
-    systick_counter_enable();
-
-    // Configure switch input
-    gpio_mode_setup(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO6);
-
-    usb_device_init();
+    usbd_device* usbd_dev = init_usb();
 
     while (1) {
-        // Behaviour is defined in usb_control.c
+        // Keep the USB device hardware fed
+        // This can be done with interrupts, but the implementation differs
+        // across devices so we're keeping this simple here.
+        usbd_poll(usbd_dev);
     }
-}
-
-/**
- * SysTick interrupt handler
- */
-void sys_tick_handler(void)
-{
-
 }

@@ -1,27 +1,33 @@
-# Serial number for USB interface (mustt be 12 or more characters in hex)
-SERIALNUM ?= DEFEA109FE7A
-CDEFS = -DUSB_SERIALNUM="\"$(SERIALNUM)\""
+# Device to build for
+# See libopencm3/ld/devices.data for valid device name patterns
+DEVICE ?= stm32f103c8
 
 # Parameters for firmware size script
 FLASH_SIZE_BYTES = 32768
 SRAM_SIZE_BYTES = 6144
 
+# Serial number for USB interface (must be 12 or more characters in hex)
+SERIALNUM ?= D000000000E7
+CDEFS += -DUSB_SERIALNUM="\"$(SERIALNUM)\""
+
 # Base OpenCM3 build
 PROJECT = boot-swtich
-BUILD_DIR = build
+BUILD_DIR = build/$(DEVICE)
 
 SHARED_DIR = ../common
 CFILES = \
+	clock.c \
 	fat.c \
 	main.c \
-	usb_control.c \
-
-SERIALNUM ?= DEVELOPMENT
+	usb.c \
 
 CSTD = -std=c11
 OPT = -Os
 
-DEVICE = stm32f070f6
+# Flag if specific devices that needs special pin mapping
+ifeq ($(DEVICE), stm32f070f6)
+	CDEFS += -DSTM32F070F6
+endif
 
 VPATH += $(SHARED_DIR)
 INCLUDES += $(patsubst %,-I%, . $(SHARED_DIR))
@@ -50,7 +56,7 @@ debug_server:
 	openocd -f $(OOCD_FILE) -c 'attach ()'
 
 debug_gdb:
-	arm-none-eabi-gdb $(PROJECT).elf -ex 'target remote :3333'
+	$(GDB) $(PROJECT).elf -ex 'target remote :3333' \
 
 disasm: $(PROJECT).elf
 	$(OBJDUMP) -d $(PROJECT).elf
