@@ -136,7 +136,7 @@ const uint8_t BootSector[] = {
     0x00,                                    // drive number
     0x00,                                    // reserved
     0x29,                                    // extended boot signature
-    QBVAL(0x55AA6921),                       // volume serial number
+    QBVAL(0x55AA6922),                       // volume serial number
     'S', 'W', 'I', 'T', 'C', 'H', ' ', ' ', ' ', ' ', ' ',  // volume label
     'F', 'A', 'T', '1', '2', ' ', ' ', ' '   // filesystem type
 };
