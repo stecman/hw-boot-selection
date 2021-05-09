@@ -1,6 +1,6 @@
 # GRUB boot selector switch
 
-Firmware for the [Hardware Boot Selection Switch](https://hackaday.io/project/179539-hardware-boot-selection-switch) project: This acts as a USB mass storage device containing a dynamic GRUB script, which sets a variable to indicate the position of the physical switch.
+Firmware for the [Hardware Boot Selection Switch](https://hackaday.io/project/179539-hardware-boot-selection-switch) project. This acts as a USB mass storage device containing a dynamic GRUB script, which sets a variable to indicate the position of a physical switch.
 
 
 ## Building
@@ -85,6 +85,6 @@ Ensure your BIOS is configured to enumerate USB storage devices. On some motherb
 
 ### Reading from an operating system
 
-The dynamic files presented by this device cannot be reliably used when mounted in an Windows or Linux. Operating systems (quite rightly) assume that the files on an underlying device won't change without their knowledge, so they cache reads heavily.
+The dynamic files presented by this device cannot be reliably used when mounted in Windows or Linux. Operating systems (quite rightly) assume that the files on an underlying device won't change without their knowledge, so they cache reads heavily.
 
 If you want to access the switch state from an operating system, you'll need to implement a second USB interface on the device, or work with the unmounted block device.
