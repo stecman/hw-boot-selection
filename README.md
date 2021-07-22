@@ -5,7 +5,7 @@ Firmware for the [Hardware Boot Selection Switch](https://hackaday.io/project/17
 
 ## Building
 
-On Linux, you'll need `gcc-arm-none-eabi` installed to build and `openocd` to flash.
+On Linux, you'll need `gcc-arm-none-eabi` and `python` installed to build and `openocd` to flash.
 
 ```sh
 # Pull in libopencm3
