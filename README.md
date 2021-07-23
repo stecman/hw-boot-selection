@@ -51,9 +51,13 @@ You'll need to modify your system's GRUB config to look for and read from this d
 
 On Debian and Arch based systems, this involves editing a script in `/etc/grub.d/`, then running `update-grub` to generate and validate the `/boot/grub/grub.cfg` file used when booting. Check your distribution's docs for how to do this on your system.
 
-Here's an example of how the switch position can be used in a GRUB script. This replaces the existing `set default=` line in your config:
+Here's an example of how the switch position can be used in a GRUB script. This overrides the existing `default` boot behavior in your config:
 
 ```sh
+# cat /etc/grub.d/01_bootswitch 
+#! /bin/sh
+
+cat <<\ EOF
 # Look for hardware switch device by its hard-coded filesystem ID
 search --no-floppy --fs-uuid --set hdswitch 55AA-6922
 
@@ -75,6 +79,7 @@ if [ "${hdswitch}" ] ; then
 else
   set default="${GRUB_DEFAULT}"
 fi
+EOF
 ```
 
 ## Troubleshooting
