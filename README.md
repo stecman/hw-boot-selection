@@ -47,35 +47,43 @@ The switch position is read from pin A6, which is pulled high internally. Connec
 
 ## GRUB config
 
-You'll need to modify your system's GRUB config to look for and read from this device.
+You'll need to modify your system's GRUB configuration to look for and read from this device during boot.
 
-On Debian and Arch based systems, this involves editing a script in `/etc/grub.d/`, then running `update-grub` to generate and validate the `/boot/grub/grub.cfg` file used when booting. Check your distribution's docs for how to do this on your system.
+On Debian and Arch based systems at least, this can be done non-destructively by creating an additional script in `/etc/grub.d/`:
 
-Here's an example of how the switch position can be used in a GRUB script. This overrides the existing `default` boot behavior in your config:
+1. Create `/etc/grub.d/01_bootswitch` with the following contents:
+  
+  ```sh
+  #! /bin/sh
 
-```sh
-# cat /etc/grub.d/01_bootswitch 
-#! /bin/sh
+  cat << 'EOF'
+  # Look for hardware switch device by its hard-coded filesystem ID
+  search --no-floppy --fs-uuid --set hdswitch 55AA-6922
 
-cat <<\EOF
-# Look for hardware switch device by its hard-coded filesystem ID
-search --no-floppy --fs-uuid --set hdswitch 55AA-6922
+  # If found, read dynamic config file and select appropriate entry for each position
+  if [ "${hdswitch}" ] ; then
+    source ($hdswitch)/switch_position_grub.cfg
 
-# If found, read dynamic config file and select appropriate entry for each position
-if [ "${hdswitch}" ] ; then
-  source ($hdswitch)/switch_position_grub.cfg
+    if [ "${os_hw_switch}" == 0 ] ; then
+      # Boot Linux
+      set default="0"
+    elif [ "${os_hw_switch}" == 1 ] ; then
+      # Boot Windows
+      set default="2"
+    fi
 
-  if [ "${os_hw_switch}" == 0 ] ; then
-    # Boot Linux
-    set default="0"
-  elif [ "${os_hw_switch}" == 1 ] ; then
-    # Boot Windows
-    set default="2"
   fi
+  EOF
+  ```
 
-fi
-EOF
-```
+2. Make it executable: `chmod +x /etc/grub.d/01_bootswitch`
+
+3. Run `update-grub` to generate and validate the `/boot/grub/grub.cfg` file that's used when booting.
+
+
+This overrides the `default` variable set in `00_header`. If the switch is not found, your existing default selection will be used.
+
+You may need to change the values on the `set default=` lines if you have a different arrangement of choices in your GRUB menu.
 
 ## Troubleshooting
 
