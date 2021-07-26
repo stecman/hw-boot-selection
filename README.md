@@ -57,7 +57,7 @@ Here's an example of how the switch position can be used in a GRUB script. This 
 # cat /etc/grub.d/01_bootswitch 
 #! /bin/sh
 
-cat <<\ EOF
+cat <<\EOF
 # Look for hardware switch device by its hard-coded filesystem ID
 search --no-floppy --fs-uuid --set hdswitch 55AA-6922
 
