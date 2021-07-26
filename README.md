@@ -71,13 +71,8 @@ if [ "${hdswitch}" ] ; then
   elif [ "${os_hw_switch}" == 1 ] ; then
     # Boot Windows
     set default="2"
-  else
-    # Fallback to default
-    set default="${GRUB_DEFAULT}"
   fi
 
-else
-  set default="${GRUB_DEFAULT}"
 fi
 EOF
 ```
