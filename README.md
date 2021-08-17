@@ -27,18 +27,19 @@ make flash PROGRAMMER=stlink
 
 This project supports building and flashing multiple different parts. The following parts have been tested:
 
-- `stm32f103c8` (default): found on the "blue pill" and "maple" STM32 dev boards
+- `stm32f103c4` (default): supports all variants of the F103 chip found on the "blue pill" and "maple" STM32 dev boards.
+- `stm32f103c6`
+- `stm32f103c8`
 - `stm32f070f6`
 
-To build for your specific part, pass the `DEVICE` parameter to `make` on the command line (or export `DEVICE` as an environment variable):
+To build for your specific part, pass the `DEVICE` parameter to `make` on the command line (or export `DEVICE` as an environment variable): 
 
 ```sh
 make DEVICE=stm32f070f6
 make flash DEVICE=stm32f070f6
 ```
 
-Valid patterns for the `DEVICE` parameter can be found in `libopencm3/ld/devices.data`.
-
+Valid patterns for the `DEVICE` parameter can be found in `libopencm3/ld/devices.data`. If you are adding custom functionality, specify your exact variant to have access to the full RAM and flash; the default is the lowest spec F103 part.
 
 ## Wiring
 

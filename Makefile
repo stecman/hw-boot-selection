@@ -1,6 +1,6 @@
 # Device to build for
 # See libopencm3/ld/devices.data for valid device name patterns
-DEVICE ?= stm32f103c8
+DEVICE ?= stm32f103c4
 
 # Programmer to use (name of interface config in OpenOCD)
 # For ST-Link v1 or v2 programmers, use "stlink"
