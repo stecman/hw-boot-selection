@@ -88,6 +88,10 @@ You may need to change the values on the `set default=` lines if you have a diff
 
 ## Troubleshooting
 
+### Device not reliably detected
+
+Issues with intermittent USB enumeration have been reported when using the `cks32f103` clone chip. These chips will flash, but may not function correctly as they are not genuine ST parts. Check the markings on your chip if you experience detection issues. Avoid buying the "CKS" parts if possible.
+
 ### The device is not accessible in GRUB
 
 Ensure your BIOS is configured to enumerate USB storage devices. On some motherboards, this requires changing from "fast boot" to "normal boot". If you can boot from a flash drive, you should be able to access this device from GRUB.
