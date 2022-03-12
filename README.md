@@ -5,7 +5,7 @@ Firmware for the [Hardware Boot Selection Switch](https://hackaday.io/project/17
 
 ## Building
 
-On Linux, you'll need `gcc-arm-none-eabi` and `python` installed to build and `openocd` to flash.
+On Linux, you'll need `gcc-arm-none-eabi` and `python` installed to build and `openocd` or [`st-flash`](https://github.com/stlink-org/stlink) to flash.
 
 ```sh
 # Pull in libopencm3
@@ -23,6 +23,9 @@ make flash
 
 # Flash with an ST-Link programmer connected by SWD
 make flash PROGRAMMER=stlink
+
+# Flash using st-flash instead of openocd (only supports ST-Link programmers)
+make flash PROGRAMMER=st-flash
 ```
 
 This project supports building and flashing multiple different parts. The following parts have been tested:

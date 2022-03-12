@@ -2,9 +2,16 @@
 # See libopencm3/ld/devices.data for valid device name patterns
 DEVICE ?= stm32f103c4
 
-# Programmer to use (name of interface config in OpenOCD)
-# For ST-Link v1 or v2 programmers, use "stlink"
-# See the interfaces/*.cfg files installed by openocd for options
+# Programmer to use. This can be either:
+#
+# - The name of an interface config file in OpenOCD like "jlink" or "stlink"
+#   (see the interfaces/*.cfg files installed by openocd for other options);
+#
+# OR
+#
+# - The special string "st-flash" to flash using stlink tools instead of OpenOCD
+#   (Available at github.com/stlink-org/stlink)
+#
 PROGRAMMER ?= jlink
 
 # Serial number for USB interface (must be 12 or more characters in hex)
@@ -28,21 +35,23 @@ ifeq ($(DEVICE), stm32f070f6)
 	CDEFS += -DSTM32F070F6
 endif
 
+# Configure OpenOCD if we're using that
+ifneq ($(PROGRAMMER), st-flash)
+	# Pick OpenOCD target config based on DEVICE parameter if not set externally
+	OOCD_TARGET ?= $(shell python ./scripts/openocd_target.py $(DEVICE))
 
-# Pick OpenOCD target config based on DEVICE parameter if not set externally
-OOCD_TARGET ?= $(shell python ./scripts/openocd_target.py $(DEVICE))
+	# Pick appropriate transport for programmer
+	ifeq ($(PROGRAMMER), stlink)
+		TRANSPORT ?= hla_swd
+	else
+		TRANSPORT ?= swd
+	endif
 
-# Pick appropriate transport for programmer
-ifeq ($(PROGRAMMER), stlink)
-	TRANSPORT ?= hla_swd
-else
-	TRANSPORT ?= swd
+	OOCD_FLAGS = -f interface/$(PROGRAMMER).cfg \
+	             -c "transport select $(TRANSPORT)" \
+	             -f target/$(OOCD_TARGET).cfg \
+	             -f openocd.cfg
 endif
-
-OOCD_FLAGS = -f interface/$(PROGRAMMER).cfg \
-             -c "transport select $(TRANSPORT)" \
-             -f target/$(OOCD_TARGET).cfg \
-             -f openocd.cfg
 
 
 # Generate the actual build targets based on this what's configured above
@@ -57,20 +66,34 @@ FLASH_SIZE_BYTES = $(shell python ./scripts/parse_defs.py _ROM $(genlink_defs))
 SRAM_SIZE_BYTES = $(shell python ./scripts/parse_defs.py _RAM $(genlink_defs))
 
 
-reset:
-	$(OOCD) -f $(OOCD_FILE) -c 'reset ()'
-
 flash: all
+ifeq ($(PROGRAMMER), st-flash)
+	st-flash --reset write $(OUTPUT_BIN) 0x8000000
+else
 	BINARY=$(OUTPUT_ELF) $(OOCD) $(OOCD_FLAGS) -c 'program_and_run ()'
+endif
 
+# Some utility targets are only supported when using OpenOCD
+ifneq ($(PROGRAMMER), st-flash)
 flash_and_debug: all
+	# Flash and halt, waiting for the debugger to attach
 	BINARY=$(OUTPUT_ELF) $(OOCD) $(OOCD_FLAGS) -c 'program_and_attach ()'
 
-debug_server:
-	# This doesn't like being backgrounded from make for some reason
-	# Run this as a background task, then run debug_gdb
-	$(OOCD) $(OOCD_FLAGS) -c 'attach ()'
+reset:
+	# Reset the target board
+	$(OOCD) -f $(OOCD_FILE) -c 'reset ()'
+endif
 
+# Start a GDB debug server. Once started, used 'make debug_gdb' to connect in
+# a separate terminal (openocd breaks if backgrounded within the Makefile)
+debug_server:
+ifeq ($(PROGRAMMER), st-flash)
+	st-util --listen_port=3333
+else
+	$(OOCD) $(OOCD_FLAGS) -c 'attach ()'
+endif
+
+# Connect to a GDB server started with 'make debug_server'
 debug_gdb:
 	$(GDB) $(OUTPUT_ELF) -ex 'target remote :3333' \
 
