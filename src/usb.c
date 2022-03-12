@@ -96,6 +96,11 @@ const struct usb_config_descriptor config = {
 
 // Filesystem size is (SECTOR_COUNT * SECTOR_SIZE) in bytes
 // Note that sector size cannot be changed as usb_msc_init defines it
+//
+// An equivalent filesystem can be created as a file for reference on Linux using:
+//
+//   mkfs.fat -F12 -i 55AA6922 -n SWITCH -s 1 -S 512 -g 64/32 -C example.bin 64
+//
 #define SECTOR_COUNT 128
 #define SECTOR_SIZE 512
 #define BYTES_PER_SECTOR 512
