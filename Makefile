@@ -12,7 +12,7 @@ SERIALNUM ?= D000000000E7
 CDEFS += -DUSB_SERIALNUM="\"$(SERIALNUM)\""
 
 # Base OpenCM3 build
-PROJECT = boot-swtich
+PROJECT = boot-switch
 
 CFILES = \
 	src/clock.c \
