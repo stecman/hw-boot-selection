@@ -96,3 +96,14 @@ uint8_t fat_write_dir(const struct FatDirEntry *direntry, uint8_t* output)
 
     return sizeof(struct FatDirEntry);
 }
+
+/**
+ * For a good explanation of the DOS date/time format used here, see:
+ * https://stackoverflow.com/a/15763512
+ */
+uint16_t fat_date(const uint16_t year, const uint8_t month, const uint8_t day)
+{
+    return ((year - 1980) << 9) | // Year is stored as an offset from 1980
+           (month << 5) |
+           (day);
+}

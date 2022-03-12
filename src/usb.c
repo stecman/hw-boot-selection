@@ -195,6 +195,8 @@ static struct VirtualFile _virtualFiles[] = {
  */
 static void generate_dir_sector(uint8_t* output)
 {
+    const uint16_t releaseDate = fat_date(2021, 5, 9);
+
     for (uint8_t i = 0; i < COUNT_OF(_virtualFiles); ++i)
     {
         const char* longName = _virtualFiles[i].longName;
@@ -202,6 +204,12 @@ static void generate_dir_sector(uint8_t* output)
 
         // Set sector automatically based on array index
         entry->start = FILEDATA_START_CLUSTER + i;
+
+        // Set the file dates to something reasonable
+        // GRUB 2.06 refuses to read the filesystem if these are set to zero
+        entry->mdate = releaseDate;
+        entry->cdate = releaseDate;
+        entry->adate = releaseDate;
 
         // Write long file name and actual directory entry
         output += fat_write_lfn(longName, entry, output);

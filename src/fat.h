@@ -59,3 +59,8 @@ uint8_t fat_write_lfn(const char* name, const struct FatDirEntry *direntry,  uin
  * Returns the number of bytes written to the output pointer (always 32)
  */
 uint8_t fat_write_dir(const struct FatDirEntry *direntry, uint8_t* output);
+
+/**
+ * Return a date formatted for use in a directory entry's mdate, adate and cdate fields
+ */
+uint16_t fat_date(const uint16_t year, const uint8_t month, const uint8_t day);
